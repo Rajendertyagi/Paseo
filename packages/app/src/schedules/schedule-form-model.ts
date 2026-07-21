@@ -134,6 +134,8 @@ export interface ScheduleFormModel {
   setPrompt: (value: string) => void;
   setMaxRuns: (value: string) => void;
   setCadence: (value: ScheduleCadence) => void;
+  setTargetKind: (kind: ScheduleFormTargetKind) => void;
+  setSelectedAgentId: (agentId: string) => void;
   setIsolation: (value: "local" | "worktree") => void;
   setArchiveOnFinish: (value: boolean) => void;
   setSubmitError: (value: string | null) => void;

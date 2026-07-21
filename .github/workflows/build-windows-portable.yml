@@ -1,0 +1,39 @@
+name: Build Windows Portable ZIP
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - unified-scheduler
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web application
+        run: npm run build --workspace=@getpaseo/app
+
+      - name: Package Windows Desktop App
+        run: npm run dist:win --workspace=@getpaseo/desktop
+
+      - name: Upload Windows Portable ZIP Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Paseo-Windows-Portable-x64
+          path: packages/desktop/release/*x64*.zip
+          if-no-files-found: error

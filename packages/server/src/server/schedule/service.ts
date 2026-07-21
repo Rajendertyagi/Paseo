@@ -856,6 +856,7 @@ export class ScheduleService {
         throw new Error(`Agent ${agent.id} already has an active run`);
       }
       const result = await this.agentManager.runAgent(agent.id, wrappedPrompt);
+      await this.agentManager.clearAgentAttention(agent.id);
       const timelineText = curateAgentActivity(result.timeline);
       return {
         agentId: agent.id,
