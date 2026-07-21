@@ -197,6 +197,7 @@ function buildRunOutput(params: {
 
 type ScheduleAgentManager = Pick<
   AgentManager,
+  | "clearAgentAttention"
   | "createAgent"
   | "getAgent"
   | "getRegisteredProviderIds"
