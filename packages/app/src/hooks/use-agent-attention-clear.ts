@@ -73,14 +73,10 @@ export function useAgentAttentionClear({
 
     if (isWeb && typeof document !== "undefined") {
       document.addEventListener("visibilitychange", updateVisibility);
-      window.addEventListener("focus", updateVisibility);
-      window.addEventListener("blur", updateVisibility);
 
       return () => {
         appStateSubscription.remove();
         document.removeEventListener("visibilitychange", updateVisibility);
-        window.removeEventListener("focus", updateVisibility);
-        window.removeEventListener("blur", updateVisibility);
       };
     }
 
