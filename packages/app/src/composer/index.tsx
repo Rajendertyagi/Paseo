@@ -1973,7 +1973,7 @@ export function Composer({
   );
 
   const messageInputAutoFocus = autoFocus && isDesktopWebBreakpoint;
-  const submitLoadingPressHandler = isAgentRunning ? handleCancelAgent : undefined;
+  const submitLoadingPressHandler = handleCancelAgent;
   const sendErrorNode = useMemo(
     () => (sendError ? <Text style={styles.sendErrorText}>{sendError}</Text> : null),
     [sendError],
