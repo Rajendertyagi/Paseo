@@ -1,41 +1,35 @@
 name: Build Windows Portable ZIP
-
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
-      - unified-scheduler
+    branches: [main, unified-scheduler]
+
+concurrency:
+  group: portable-zip-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-windows:
     runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      NODE_OPTIONS: '--max-old-space-size=4096'
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 'lts/*'
           cache: npm
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build web application
-        run: npm run build --workspace=@getpaseo/app
-
-      - name: Package Windows Desktop App
+      - run: npm ci
+      - run: npm run build --workspace=@getpaseo/app
+      - run: npm run build --workspace=@getpaseo/desktop
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run build --workspace=@getpaseo/desktop
-
-      - name: Upload Windows Portable ZIP Artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: Paseo-Windows-Portable-x64
           path: packages/desktop/release/*x64*.zip
           if-no-files-found: error
+          retention-days: 3
