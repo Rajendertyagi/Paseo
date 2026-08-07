@@ -1,6 +1,7 @@
 import TurndownService from "turndown";
 import { gfm } from "turndown-plugin-gfm";
 import {
+  createCodeClipboardContent,
   createMarkdownClipboardContent,
   type MarkdownClipboardContent,
 } from "@/utils/rich-clipboard";
@@ -11,9 +12,12 @@ import {
   MARKDOWN_COPY_LIST_START_ATTRIBUTE,
   MARKDOWN_COPY_TAG_ATTRIBUTE,
   MARKDOWN_COPY_UNWRAP_ATTRIBUTE,
+  TRAILING_CODE_LINE_BREAKS,
 } from "./markup";
 
 const ASSISTANT_MESSAGE_SELECTOR = '[data-testid="assistant-message"]';
+const CODE_BLOCK_SELECTOR = `[${MARKDOWN_COPY_TAG_ATTRIBUTE}="pre"]`;
+const CODE_REGION_SELECTOR = `${CODE_BLOCK_SELECTOR}, [${MARKDOWN_COPY_TAG_ATTRIBUTE}="code"]`;
 
 const turndown = new TurndownService({
   bulletListMarker: "-",
@@ -65,6 +69,11 @@ export function createAssistantSelectionClipboardContent(
     return null;
   }
 
+  const partialCode = createPartialCodeContent(range, startMessage);
+  if (partialCode) {
+    return partialCode;
+  }
+
   const container = document.createElement("div");
   const selected = cloneMarkdownSelection(range, startMessage);
   container.append(selected);
@@ -76,6 +85,68 @@ export function createAssistantSelectionClipboardContent(
   }
   const content = createMarkdownClipboardContent(markdown);
   return { ...content, html: flattenClipboardListMarkup(content.html) };
+}
+
+/**
+ * Partly-selected code copies as the code itself, never through Turndown.
+ *
+ * `removeUnselectedSemantics` strips the `pre`/`code` tags from a partial selection,
+ * which is right for the Markdown syntax but leaves the code being serialized as
+ * prose: Turndown collapses the indentation and the line breaks, and escapes
+ * Markdown-significant characters inside it. Two selected lines arrive as one.
+ *
+ * A selection contained inside code always copies as code, even when it contains every
+ * character. A selection that crosses the code boundary stays on the Markdown path so
+ * a complete block retains its fence.
+ */
+function createPartialCodeContent(range: Range, message: Element): MarkdownClipboardContent | null {
+  const region = closestCodeRegion(range.commonAncestorContainer, message);
+  if (!region) {
+    return null;
+  }
+
+  const code = selectedCodeText(range);
+  if (!code) {
+    return null;
+  }
+
+  // `closest` stops at the inner `code` span, but the fence language lives on the
+  // outer `pre` wrapper.
+  const fence = region.closest(CODE_BLOCK_SELECTOR);
+
+  // Only multi-line code earns markup in the html half, and only because HTML would
+  // otherwise collapse the newlines. A single line stays undecorated, like every
+  // other partial selection.
+  const block = Boolean(fence) && code.includes("\n");
+  return createCodeClipboardContent(code, {
+    language: fence?.getAttribute(MARKDOWN_COPY_LANGUAGE_ATTRIBUTE),
+    block,
+  });
+}
+
+function closestCodeRegion(node: Node, message: Element): Element | null {
+  const element = node instanceof Element ? node : node.parentElement;
+  const region = element?.closest(CODE_REGION_SELECTOR) ?? null;
+  if (!region || !message.contains(region)) {
+    return null;
+  }
+  // A selection sitting entirely inside the block's own hover Copy button is not
+  // code. `cloneContents` of a single text node drops the ignore marker with the
+  // element that carried it, so this has to be asked of the live DOM.
+  return element?.closest(`[${MARKDOWN_COPY_IGNORE_ATTRIBUTE}]`) ? null : region;
+}
+
+function selectedCodeText(range: Range): string {
+  const fragment = range.cloneContents();
+  // The hover Copy button lives inside the `pre`, so a selection that reaches the
+  // end of the block sweeps it up too.
+  for (const ignored of fragment.querySelectorAll(`[${MARKDOWN_COPY_IGNORE_ATTRIBUTE}]`)) {
+    ignored.remove();
+  }
+  // Deliberately untrimmed — leading indentation is part of the code. Trailing line
+  // breaks are the exception: newlines are their own text nodes between rendered
+  // lines, so a selection that overshoots the end of a line sweeps one in.
+  return (fragment.textContent ?? "").replace(TRAILING_CODE_LINE_BREAKS, "");
 }
 
 function flattenClipboardListMarkup(html: string): string {
@@ -91,9 +162,12 @@ function flattenClipboardListMarkup(html: string): string {
     items.forEach((item, index) => {
       const line = document.createElement("div");
       line.append(start === null ? "- " : `${start + index}. `);
+      const nestedLines: HTMLDivElement[] = [];
       let hasParagraph = false;
       for (const child of Array.from(item.childNodes)) {
-        if (child instanceof HTMLParagraphElement) {
+        if (child instanceof HTMLDivElement) {
+          nestedLines.push(child);
+        } else if (child instanceof HTMLParagraphElement) {
           if (hasParagraph) {
             line.append(document.createElement("br"), document.createElement("br"));
           }
@@ -103,7 +177,7 @@ function flattenClipboardListMarkup(html: string): string {
           line.append(child);
         }
       }
-      replacement.append(line);
+      replacement.append(line, ...nestedLines);
     });
     list.replaceWith(replacement);
   }
@@ -204,11 +278,27 @@ function shouldPreserveSemanticElement(range: Range, element: Element): boolean 
   if (tag === "p" || isTableStructure(tag)) {
     return true;
   }
+  const isSelectableSemantic = tag !== null && tag !== "ol" && tag !== "ul";
+  if (
+    (isSelectableSemantic || element.tagName === "A") &&
+    selectionStaysInsideElement(range, element)
+  ) {
+    return false;
+  }
   if (tag === "ol" || tag === "ul") {
     const selectedItems = selectedListItems(element, range);
     return selectedItems.some((item) => hasSelectedAllContents(range, item, true));
   }
   return hasSelectedAllContents(range, element, tag === "li");
+}
+
+function selectionStaysInsideElement(range: Range, element: Element): boolean {
+  return (
+    range.startContainer !== element &&
+    range.endContainer !== element &&
+    element.contains(range.startContainer) &&
+    element.contains(range.endContainer)
+  );
 }
 
 function selectedListItems(list: Element, range: Range): Element[] {
