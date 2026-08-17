@@ -1,4 +1,5 @@
 import type { TranslationResources } from "./en";
+import { pluginSettings } from "./plugin-settings";
 
 export const ptBR: TranslationResources = {
   common: {
@@ -54,14 +55,19 @@ export const ptBR: TranslationResources = {
       close: "Fechar menu",
     },
     commandCenter: {
-      placeholder: "Buscar comandos, espaços de trabalho e agentes...",
+      placeholder: "Buscar comandos, arquivos, espaços de trabalho e agentes...",
+      filePlaceholder: "Pesquisar arquivos...",
+      searchingFiles: "Pesquisando arquivos...",
       noMatches: "Nenhuma correspondência",
       actions: "Ações",
+      files: "Arquivos",
       workspaces: "Espaços de trabalho",
       agents: "Agentes",
       newAgent: "Novo agente",
       addProject: "Adicionar projeto",
       home: "Início",
+      groupByProject: "Agrupar por projeto",
+      groupByStatus: "Agrupar por status",
       modelGroupLabel: "Modelo",
       modelSearchKeywords: "trocar modelo mudar modelo definir modelo selecionar modelo",
       thinkingGroupLabel: "Raciocínio",
@@ -91,6 +97,7 @@ export const ptBR: TranslationResources = {
       interruptAgent: "Interromper agente",
       queueMessage: "Enfileirar mensagem",
       sendAndInterrupt: "Enviar e interromper",
+      sendAndSteer: "Enviar e orientar",
       sendMessage: "Enviar mensagem",
       queue: "Fila",
       send: "Enviar",
@@ -272,6 +279,14 @@ export const ptBR: TranslationResources = {
     },
   },
   message: {
+    diagram: {
+      diagram: "Diagrama",
+      zoomIn: "Aproximar",
+      zoomOut: "Afastar",
+      resetZoom: "Redefinir visualização",
+      viewSource: "Ver fonte",
+      viewDiagram: "Ver diagrama",
+    },
     actions: {
       copyCode: "Copiar código",
       copyTurn: "Copiar turno",
@@ -323,6 +338,15 @@ export const ptBR: TranslationResources = {
     todo: {
       title: "Tarefas",
       empty: "Nenhuma tarefa ainda.",
+      tasksProgress: "{{completed}}/{{total}} tarefas",
+      tasksProgressCurrent: "{{completed}}/{{total}} tarefas · {{task}}",
+      activity: {
+        created: "{{count}} tarefas criadas",
+        added: "Adicionada",
+        started: "Iniciada",
+        completed: "Concluída",
+        reopened: "Reaberta",
+      },
     },
     compaction: {
       loading: "Compactando...",
@@ -394,9 +418,32 @@ export const ptBR: TranslationResources = {
     fileActions: {
       openFile: "Abrir arquivo",
       copyPath: "Copiar caminho",
+      copyRelativePath: "Copiar caminho relativo",
+      revealIn: "Mostrar no {{target}}",
       download: "Baixar",
       addToChat: "Adicionar ao chat",
       moreActions: "Mais ações",
+      newFile: "Novo arquivo",
+      newFolder: "Nova pasta",
+      collapseFolder: "Recolher pasta",
+      rename: "Renomear",
+      duplicate: "Duplicar",
+      revert: "Descartar alterações",
+      delete: "Excluir",
+      confirmDelete: {
+        fileTitle: "Excluir arquivo?",
+        folderTitle: "Excluir pasta?",
+        message: '"{{name}}" será excluído permanentemente.',
+        confirm: "Excluir",
+        cancel: "Cancelar",
+      },
+      confirmRevert: {
+        title: "Descartar alterações?",
+        message: 'As alterações em "{{name}}" serão descartadas permanentemente.',
+        confirm: "Descartar",
+        cancel: "Cancelar",
+        failed: "Falha ao descartar alterações",
+      },
     },
     fileExplorer: {
       sort: {
@@ -426,6 +473,15 @@ export const ptBR: TranslationResources = {
       },
       errors: {
         failedToListDirectory: "Falha ao listar diretório",
+        createFailed: "Falha ao criar entrada",
+        renameFailed: "Falha ao renomear entrada",
+        duplicateFailed: "Falha ao duplicar entrada",
+        revealFailed: "Falha ao mostrar entrada",
+        deleteFailed: "Falha ao excluir entrada",
+      },
+      draft: {
+        filePlaceholder: "Nome do arquivo",
+        folderPlaceholder: "Nome da pasta",
       },
     },
     setup: {
@@ -473,6 +529,8 @@ export const ptBR: TranslationResources = {
         screenshotCopied: "Captura copiada para a área de transferência",
         elementCopied: "Elemento copiado para a área de transferência",
         screenshotFailed: "Não foi possível copiar a captura",
+        selectorLoading: "Aguarde o carregamento da página terminar",
+        selectorFailed: "Não foi possível iniciar o seletor de elemento",
       },
       annotate: {
         title: "Anotar elemento",
@@ -533,6 +591,7 @@ export const ptBR: TranslationResources = {
         renameAgent: "Renomear agente",
       },
       actions: {
+        newTab: "Nova aba",
         newAgent: "Novo agente",
         newTerminal: "Novo terminal",
         preparingTerminal: "Preparando aba de terminal",
@@ -541,6 +600,9 @@ export const ptBR: TranslationResources = {
         exitFocusMode: "Sair do modo de foco",
         splitRight: "Dividir painel à direita",
         splitDown: "Dividir painel abaixo",
+        changes: "Alterações",
+        files: "Arquivos",
+        pullRequest: "Pull request",
         terminalProfilesMenu: "Perfis de terminal",
         editTerminalProfiles: "Editar perfis…",
         pinTarget: "Fixar",
@@ -564,6 +626,7 @@ export const ptBR: TranslationResources = {
         reloadingAgent: "Recarregando agente...",
         reloadedAgent: "Agente recarregado",
         failedToReloadAgent: "Falha ao recarregar agente",
+        failedToCloseAgent: "Falha ao fechar agente",
       },
       confirmations: {
         unsavedTitle: "Alterações não salvas",
@@ -934,6 +997,8 @@ export const ptBR: TranslationResources = {
       },
       show: {
         label: "Mostrar",
+        branch: "Branch",
+        project: "Projeto",
         host: "Host",
         changeRequest: "Pull request",
         checks: "Verificações",
@@ -1378,14 +1443,19 @@ export const ptBR: TranslationResources = {
     loadingSelector: "Carregando seletor de modelos...",
     error: "Erro",
     defaultModel: "Padrão",
-    favorites: "Favoritos",
-    favoriteModel: "Favoritar modelo",
-    unfavoriteModel: "Remover modelo dos favoritos",
+    profiles: "Perfis",
+    providers: "Provedores",
+    model: "Modelo",
+    editProfiles: "Editar",
+    editProfilesLabel: "Editar perfis de agente",
+    createProfile: "Criar perfil",
     modelCount: "{{count}} modelo",
     modelCountPlural: "{{count}} modelos",
     retry: "Tentar novamente",
     retrying: "Tentando novamente...",
     noMatches: "Nenhum modelo corresponde à sua busca",
+    noMatchesForQuery: "Nenhum modelo corresponde a «{{query}}»",
+    searchAllPlaceholder: "Buscar em todos os modelos...",
     searchPlaceholder: "Buscar modelos...",
     openProviderSettings: "Abrir configurações de {{provider}}",
   },
@@ -1452,19 +1522,6 @@ export const ptBR: TranslationResources = {
         label: "Avançado",
         show: "Mostrar avançado",
         hide: "Ocultar avançado",
-      },
-      headers: {
-        title: "Cabeçalhos personalizados",
-        add: "Adicionar cabeçalho",
-        name: "Nome",
-        value: "Valor",
-        remove: "Remover cabeçalho",
-        errors: {
-          missingName: "Digite um nome para cada cabeçalho",
-          invalidName: "{{name}} não é um nome de cabeçalho válido",
-          invalidValue: "{{name}} contém uma quebra de linha inválida",
-          duplicateName: "{{name}} foi inserido mais de uma vez",
-        },
       },
       passwordVisibility: {
         show: "Mostrar senha",
@@ -1598,6 +1655,7 @@ export const ptBR: TranslationResources = {
     archiveTooltip: "Arquivar subagente",
     archiveFinishedAction: "Arquivar subagentes concluídos",
     archiveFinishedTooltip: "Arquivar concluídos",
+    archiveFinishedRetry: "Tentar novamente ({{failed}}/{{total}})",
   },
   panels: {
     draft: {
@@ -1632,6 +1690,17 @@ export const ptBR: TranslationResources = {
         reloadTitle: "Recarregar do disco?",
         reloadMessage: "Suas alterações locais serão perdidas.",
       },
+    },
+    files: {
+      label: "Arquivos",
+      subtitle: "Arquivos do espaço de trabalho",
+      tooltip: "Explorar arquivos do espaço de trabalho",
+    },
+    pullRequest: {
+      label: "Pull request",
+      subtitle: "Detalhes do pull request",
+      emptyTitle: "Ainda não há pull request",
+      emptyDescription: "Crie um pull request para este checkout para ver os detalhes aqui.",
     },
     diff: {
       changesLabel: "Alterações",
@@ -1761,11 +1830,28 @@ export const ptBR: TranslationResources = {
       projects: "Projetos",
       connections: "Conexões",
       agents: "Agentes",
+      metadata: "Metadados",
       workspaces: "Workspaces",
       providers: "Provedores",
       usage: "Uso",
       terminals: "Terminais",
+      plugins: "Plugins",
       host: "Visão geral",
+    },
+    plugins: pluginSettings["pt-BR"],
+    metadataGeneration: {
+      title: "Geração de metadados",
+      description:
+        "Escolha o modelo usado pelo Paseo para títulos de espaços de trabalho, nomes de branches, mensagens de commit e rascunhos de pull request",
+      selection: "Seleção de modelo",
+      automatic: "Automática",
+      preferred: "Manual",
+      automaticHint: "O Paseo escolhe um modelo rápido disponível",
+      preferredHint: "Escolha o modelo que o Paseo usa",
+      model: "Modelo",
+      fallbackHint: "Se ele não estiver disponível, o Paseo usa outro modelo disponível",
+      docs: "Documentação",
+      saveError: "Não foi possível atualizar a geração de metadados",
     },
     general: {
       title: "Geral",
@@ -1786,10 +1872,13 @@ export const ptBR: TranslationResources = {
         descriptions: {
           interrupt:
             "Quando o agente está em execução, Enter interrompe. Command/Ctrl+Enter enfileira.",
+          steer:
+            "Quando o agente está em execução, Enter orienta o turno ativo. Command/Ctrl+Enter enfileira.",
           queue: "Quando o agente está em execução, Enter enfileira. Command/Ctrl+Enter envia.",
         },
         options: {
           interrupt: "Interromper",
+          steer: "Orientar",
           queue: "Fila",
         },
       },
@@ -1956,10 +2045,10 @@ export const ptBR: TranslationResources = {
         resetAll: "Redefinir tudo",
       },
       sections: {
-        navigation: "Navegação",
+        general: "Geral",
+        workspaces: "Projetos e workspaces",
         tabsPanes: "Abas e painéis",
-        projects: "Projetos",
-        panels: "Painéis",
+        layout: "Layout",
         agentInput: "Entrada do agente",
       },
       help: {
@@ -1987,6 +2076,7 @@ export const ptBR: TranslationResources = {
         moveTabDown: "Mover aba para baixo",
         closePane: "Fechar painel",
         newTerminal: "Novo terminal",
+        searchFiles: "Pesquisar arquivos",
         toggleCommandCenter: "Alternar central de comandos",
         showKeyboardShortcuts: "Mostrar atalhos de teclado",
         toggleLeftSidebar: "Alternar barra lateral esquerda",
@@ -2177,6 +2267,44 @@ export const ptBR: TranslationResources = {
         emptyState:
           "Nenhum perfil ainda. Adicione um para abrir terminais com um comando específico.",
       },
+      agentProfiles: {
+        sectionTitle: "Perfis de agente",
+        unavailable: "Conecte-se a este host para gerenciar perfis de agente",
+        unsupported: "Este host executa um daemon que ainda não é compatível com perfis de agente",
+        emptyState:
+          "Nenhum perfil ainda. Adicione um para iniciar agentes a partir de um provedor e modelo salvos.",
+        addProfileTitle: "Adicionar perfil de agente",
+        newProfile: "Novo perfil",
+        editProfile: "Editar perfil",
+        editProfileTitle: "Editar perfil de agente",
+        nameLabel: "Nome",
+        namePlaceholder: "Trabalho de UI",
+        iconLabel: "Ícone",
+        noIcon: "Nenhum",
+        providerLabel: "Provedor",
+        providerPlaceholder: "Selecione um provedor",
+        noProviders: "Nenhum provedor está disponível neste host",
+        modelLabel: "Modelo",
+        noModels: "Este provedor não tem modelos para escolher",
+        modeLabel: "Modo",
+        noModes: "Este provedor não tem modos para escolher",
+        thinkingLabel: "Raciocínio",
+        noThinkingOptions: "Este modelo não tem níveis de raciocínio",
+        featuresLabel: "Recursos",
+        featureCount: "{{count}} recursos",
+        featureCountOne: "{{count}} recurso",
+        notesLabel: "Notas para os agentes",
+        notesPlaceholder: "Use para trabalho de UI — componentes, layout e tokens de design.",
+        notesHint:
+          'Retornado pela ferramenta MCP "list_profiles". Escreva como uma instrução para outro agente.',
+        save: "Salvar",
+        saving: "Salvando...",
+        remove: "Remover",
+        removeConfirmTitle: "Remover perfil?",
+        removeConfirmMessage: 'Remover "{{name}}"?',
+        moveUp: "Mover para cima",
+        moveDown: "Mover para baixo",
+      },
       daemon: {
         rename: {
           editLabel: "Editar rótulo",
@@ -2345,6 +2473,9 @@ export const ptBR: TranslationResources = {
           "Veja a documentação para mais detalhes e as variáveis de ambiente disponíveis para estes comandos",
         setup: "Configuração",
         setupAccessibility: "Comandos de configuração do worktree",
+        uncommittedTitle: "Faça commit das alterações no paseo.json",
+        uncommittedDescription:
+          "Novos worktrees usam o script de configuração do branch base selecionado.",
         teardown: "Desmontagem",
         teardownAccessibility: "Comandos de desmontagem do worktree",
       },

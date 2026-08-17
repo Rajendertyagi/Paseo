@@ -1,4 +1,5 @@
 import type { TranslationResources } from "./en";
+import { pluginSettings } from "./plugin-settings";
 
 export const ja: TranslationResources = {
   common: {
@@ -54,14 +55,19 @@ export const ja: TranslationResources = {
       close: "メニューを閉じる",
     },
     commandCenter: {
-      placeholder: "コマンド、ワークスペース、エージェントを検索...",
+      placeholder: "コマンド、ファイル、ワークスペース、エージェントを検索...",
+      filePlaceholder: "ファイルを検索...",
+      searchingFiles: "ファイルを検索中...",
       noMatches: "一致なし",
       actions: "アクション",
+      files: "ファイル",
       workspaces: "ワークスペース",
       agents: "エージェント",
       newAgent: "新しいエージェント",
       addProject: "プロジェクトを追加",
       home: "ホーム",
+      groupByProject: "プロジェクトでグループ化",
+      groupByStatus: "ステータスでグループ化",
       modelGroupLabel: "モデル",
       modelSearchKeywords: "モデルを切り替え モデルを変更 モデルを設定 モデルを選択",
       thinkingGroupLabel: "思考",
@@ -91,6 +97,7 @@ export const ja: TranslationResources = {
       interruptAgent: "エージェントを中断",
       queueMessage: "メッセージをキューに追加",
       sendAndInterrupt: "送信して中断",
+      sendAndSteer: "送信して指示を追加",
       sendMessage: "メッセージを送信",
       queue: "キュー",
       send: "送信",
@@ -272,6 +279,14 @@ export const ja: TranslationResources = {
     },
   },
   message: {
+    diagram: {
+      diagram: "図",
+      zoomIn: "拡大",
+      zoomOut: "縮小",
+      resetZoom: "表示をリセット",
+      viewSource: "ソースを表示",
+      viewDiagram: "図を表示",
+    },
     actions: {
       copyCode: "コードをコピー",
       copyTurn: "ターンをコピー",
@@ -323,6 +338,15 @@ export const ja: TranslationResources = {
     todo: {
       title: "タスク",
       empty: "タスクがまだありません。",
+      tasksProgress: "{{completed}}/{{total}}タスク",
+      tasksProgressCurrent: "{{completed}}/{{total}}タスク · {{task}}",
+      activity: {
+        created: "{{count}}件のタスクを作成",
+        added: "追加",
+        started: "開始",
+        completed: "完了",
+        reopened: "再開",
+      },
     },
     compaction: {
       loading: "コンテキストを圧縮中...",
@@ -394,9 +418,32 @@ export const ja: TranslationResources = {
     fileActions: {
       openFile: "ファイルを開く",
       copyPath: "パスをコピー",
+      copyRelativePath: "相対パスをコピー",
+      revealIn: "{{target}}で表示",
       download: "ダウンロード",
       addToChat: "チャットに追加",
       moreActions: "その他のアクション",
+      newFile: "新規ファイル",
+      newFolder: "新規フォルダ",
+      collapseFolder: "フォルダを折りたたむ",
+      rename: "名前を変更",
+      duplicate: "複製",
+      revert: "変更を破棄",
+      delete: "削除",
+      confirmDelete: {
+        fileTitle: "ファイルを削除しますか？",
+        folderTitle: "フォルダを削除しますか？",
+        message: "「{{name}}」は完全に削除されます。",
+        confirm: "削除",
+        cancel: "キャンセル",
+      },
+      confirmRevert: {
+        title: "変更を破棄しますか？",
+        message: "「{{name}}」への変更は完全に破棄されます。",
+        confirm: "破棄",
+        cancel: "キャンセル",
+        failed: "変更の破棄に失敗しました",
+      },
     },
     fileExplorer: {
       sort: {
@@ -426,6 +473,15 @@ export const ja: TranslationResources = {
       },
       errors: {
         failedToListDirectory: "ディレクトリの一覧取得に失敗しました",
+        createFailed: "エントリの作成に失敗しました",
+        renameFailed: "エントリの名前変更に失敗しました",
+        duplicateFailed: "エントリの複製に失敗しました",
+        revealFailed: "エントリの表示に失敗しました",
+        deleteFailed: "エントリの削除に失敗しました",
+      },
+      draft: {
+        filePlaceholder: "ファイル名",
+        folderPlaceholder: "フォルダ名",
       },
     },
     setup: {
@@ -473,6 +529,8 @@ export const ja: TranslationResources = {
         screenshotCopied: "スクリーンショットをクリップボードにコピーしました",
         elementCopied: "要素をクリップボードにコピーしました",
         screenshotFailed: "スクリーンショットをコピーできませんでした",
+        selectorLoading: "ページの読み込みが完了するまでお待ちください",
+        selectorFailed: "要素セレクターを開始できませんでした",
       },
       annotate: {
         title: "要素に注釈を付ける",
@@ -534,6 +592,7 @@ export const ja: TranslationResources = {
         renameAgent: "エージェントの名前を変更",
       },
       actions: {
+        newTab: "新しいタブ",
         newAgent: "新しいエージェント",
         newTerminal: "新しいターミナル",
         preparingTerminal: "ターミナルタブを準備中",
@@ -542,6 +601,9 @@ export const ja: TranslationResources = {
         exitFocusMode: "フォーカスモードを終了",
         splitRight: "右にペインを分割",
         splitDown: "下にペインを分割",
+        changes: "変更",
+        files: "ファイル",
+        pullRequest: "プルリクエスト",
         terminalProfilesMenu: "ターミナルプロファイル",
         editTerminalProfiles: "プロファイルを編集…",
         pinTarget: "ピン留め",
@@ -565,6 +627,7 @@ export const ja: TranslationResources = {
         reloadingAgent: "エージェントを再読み込み中...",
         reloadedAgent: "エージェントを再読み込みしました",
         failedToReloadAgent: "エージェントの再読み込みに失敗しました",
+        failedToCloseAgent: "エージェントを閉じられませんでした",
       },
       confirmations: {
         unsavedTitle: "未保存の変更",
@@ -923,6 +986,8 @@ export const ja: TranslationResources = {
       },
       show: {
         label: "表示項目",
+        branch: "ブランチ",
+        project: "プロジェクト",
         host: "ホスト",
         changeRequest: "プルリクエスト",
         checks: "チェック",
@@ -1365,14 +1430,19 @@ export const ja: TranslationResources = {
     loadingSelector: "モデルセレクターを読み込み中...",
     error: "エラー",
     defaultModel: "デフォルト",
-    favorites: "お気に入り",
-    favoriteModel: "お気に入りモデル",
-    unfavoriteModel: "お気に入りを解除",
+    profiles: "プロファイル",
+    providers: "プロバイダー",
+    model: "モデル",
+    editProfiles: "編集",
+    editProfilesLabel: "エージェントプロファイルを編集",
+    createProfile: "プロファイルを作成",
     modelCount: "{{count}}つのモデル",
     modelCountPlural: "{{count}}つのモデル",
     retry: "再試行",
     retrying: "再試行中...",
     noMatches: "検索に一致するモデルがありません",
+    noMatchesForQuery: "「{{query}}」に一致するモデルがありません",
+    searchAllPlaceholder: "すべてのモデルを検索...",
     searchPlaceholder: "モデルを検索...",
     openProviderSettings: "{{provider}}の設定を開く",
   },
@@ -1439,19 +1509,6 @@ export const ja: TranslationResources = {
         label: "詳細設定",
         show: "詳細設定を表示",
         hide: "詳細設定を非表示",
-      },
-      headers: {
-        title: "カスタムヘッダー",
-        add: "ヘッダーを追加",
-        name: "名前",
-        value: "値",
-        remove: "ヘッダーを削除",
-        errors: {
-          missingName: "各ヘッダーの名前を入力してください",
-          invalidName: "{{name}} は有効なヘッダー名ではありません",
-          invalidValue: "{{name}} に無効な改行が含まれています",
-          duplicateName: "{{name}} が複数回入力されています",
-        },
       },
       passwordVisibility: {
         show: "パスワードを表示",
@@ -1585,6 +1642,7 @@ export const ja: TranslationResources = {
     archiveTooltip: "サブエージェントをアーカイブ",
     archiveFinishedAction: "完了したサブエージェントをアーカイブ",
     archiveFinishedTooltip: "完了した項目をアーカイブ",
+    archiveFinishedRetry: "再試行 ({{failed}}/{{total}})",
   },
   panels: {
     draft: {
@@ -1619,6 +1677,18 @@ export const ja: TranslationResources = {
         reloadTitle: "ディスクから再読み込みしますか？",
         reloadMessage: "ローカルの変更は失われます。",
       },
+    },
+    files: {
+      label: "ファイル",
+      subtitle: "ワークスペースのファイル",
+      tooltip: "ワークスペースのファイルを参照",
+    },
+    pullRequest: {
+      label: "プルリクエスト",
+      subtitle: "プルリクエストの詳細",
+      emptyTitle: "プルリクエストはまだありません",
+      emptyDescription:
+        "このチェックアウトのプルリクエストを作成すると、ここに詳細が表示されます。",
     },
     diff: {
       changesLabel: "変更",
@@ -1748,11 +1818,28 @@ export const ja: TranslationResources = {
       projects: "プロジェクト",
       connections: "接続",
       agents: "エージェント",
+      metadata: "メタデータ",
       workspaces: "ワークスペース",
       providers: "プロバイダー",
       usage: "使用状況",
       terminals: "ターミナル",
+      plugins: "プラグイン",
       host: "概要",
+    },
+    plugins: pluginSettings.ja,
+    metadataGeneration: {
+      title: "メタデータ生成",
+      description:
+        "ワークスペースのタイトル、ブランチ名、コミットメッセージ、プルリクエストの下書きに使用するモデルを選択します",
+      selection: "モデル選択",
+      automatic: "自動",
+      preferred: "手動",
+      automaticHint: "Paseo が利用可能な高速モデルを選択します",
+      preferredHint: "Paseo が使用するモデルを選択します",
+      model: "モデル",
+      fallbackHint: "利用できない場合、Paseo は別の利用可能なモデルを使用します",
+      docs: "ドキュメント",
+      saveError: "メタデータ生成を更新できません",
     },
     general: {
       title: "一般",
@@ -1771,10 +1858,13 @@ export const ja: TranslationResources = {
         label: "デフォルトの送信",
         descriptions: {
           interrupt: "エージェント実行中、Enterで中断します。Command/Ctrl+Enterでキューに追加。",
+          steer:
+            "エージェント実行中、Enterで現在のターンに指示を送ります。Command/Ctrl+Enterでキューに追加。",
           queue: "エージェント実行中、Enterでキューに追加します。Command/Ctrl+Enterで送信。",
         },
         options: {
           interrupt: "中断",
+          steer: "指示",
           queue: "キュー",
         },
       },
@@ -1941,10 +2031,10 @@ export const ja: TranslationResources = {
         resetAll: "すべてリセット",
       },
       sections: {
-        navigation: "ナビゲーション",
+        general: "一般",
+        workspaces: "プロジェクト＆ワークスペース",
         tabsPanes: "タブ＆ペイン",
-        projects: "プロジェクト",
-        panels: "パネル",
+        layout: "レイアウト",
         agentInput: "エージェント入力",
       },
       help: {
@@ -1972,6 +2062,7 @@ export const ja: TranslationResources = {
         moveTabDown: "タブを下に移動",
         closePane: "ペインを閉じる",
         newTerminal: "新しいターミナル",
+        searchFiles: "ファイルを検索",
         toggleCommandCenter: "コマンドセンターを切り替え",
         showKeyboardShortcuts: "キーボードショートカットを表示",
         toggleLeftSidebar: "左サイドバーを切り替え",
@@ -2162,6 +2253,44 @@ export const ja: TranslationResources = {
         emptyState:
           "プロファイルがまだありません。特定のコマンドでターミナルを起動するために追加してください。",
       },
+      agentProfiles: {
+        sectionTitle: "エージェントプロファイル",
+        unavailable: "エージェントプロファイルを管理するにはこのホストに接続してください",
+        unsupported: "このホストで動作するデーモンはまだエージェントプロファイルに対応していません",
+        emptyState:
+          "プロファイルがまだありません。保存したプロバイダーとモデルでエージェントを起動するために追加してください。",
+        addProfileTitle: "エージェントプロファイルを追加",
+        newProfile: "新しいプロファイル",
+        editProfile: "プロファイルを編集",
+        editProfileTitle: "エージェントプロファイルを編集",
+        nameLabel: "名前",
+        namePlaceholder: "UI作業",
+        iconLabel: "アイコン",
+        noIcon: "なし",
+        providerLabel: "プロバイダー",
+        providerPlaceholder: "プロバイダーを選択",
+        noProviders: "このホストで利用できるプロバイダーがありません",
+        modelLabel: "モデル",
+        noModels: "このプロバイダーには選択できるモデルがありません",
+        modeLabel: "モード",
+        noModes: "このプロバイダーには選択できるモードがありません",
+        thinkingLabel: "思考",
+        noThinkingOptions: "このモデルには思考レベルがありません",
+        featuresLabel: "機能",
+        featureCount: "{{count}}個の機能",
+        featureCountOne: "{{count}}個の機能",
+        notesLabel: "エージェントへのメモ",
+        notesPlaceholder: "UI作業に使用 — コンポーネント、レイアウト、デザイントークンなど。",
+        notesHint:
+          "list_profiles MCPツールによって返されます。他のエージェントへの指示として記述してください。",
+        save: "保存",
+        saving: "保存中...",
+        remove: "削除",
+        removeConfirmTitle: "プロファイルを削除しますか？",
+        removeConfirmMessage: '"{{name}}"を削除しますか？',
+        moveUp: "上に移動",
+        moveDown: "下に移動",
+      },
       daemon: {
         rename: {
           editLabel: "ラベルを編集",
@@ -2330,6 +2459,9 @@ export const ja: TranslationResources = {
           "これらのコマンドで使用可能な詳細と環境変数についてはドキュメントを参照してください",
         setup: "セットアップ",
         setupAccessibility: "ワークツリーセットアップコマンド",
+        uncommittedTitle: "paseo.json の変更をコミットしてください",
+        uncommittedDescription:
+          "新しいワークツリーでは、選択したベースブランチのセットアップスクリプトが使われます。",
         teardown: "削除時",
         teardownAccessibility: "ワークツリー削除時のコマンド",
       },

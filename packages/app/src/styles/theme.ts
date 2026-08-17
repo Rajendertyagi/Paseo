@@ -107,8 +107,6 @@ export const baseColors = {
   },
 } as const;
 
-export type ThemeName = "light" | "dark" | "zinc" | "midnight" | "claude" | "ghostty" | "pureBlack";
-
 // Diff colors — the +/- inside a diff view, where the color *is* the signal and has to
 // survive being scanned line by line, so it stays saturated. Light uses muted tones, dark
 // uses the brighter palette values.
@@ -165,11 +163,18 @@ const darkStatusColors = {
 // for them. Same four hues and the same generation rule as the status colors above, but its
 // own band, because a dot is doing a different job than a check icon or a host badge.
 //
-// A dot is 6-8pt of solid color with no shape to read and no label attached. At the status
+// A dot is 6pt of solid color with no shape to read and no label attached. At the status
 // band's lightness the dots read dimmer than the static text and icons beside them on the same
-// row, which is backwards — the dot is the row's state. So the band is pushed away from the
-// surface rather than toward it (darker in light, lighter in dark) and carries more chroma:
-// 90% of gamut max against the status family's 55-60%.
+// row, which is backwards — the dot is the row's state. The loudness comes from chroma: 90% of
+// gamut max against the status family's 55-60%.
+//
+// Lightness is set by hue separation, not by distance from the surface. A dark dot on a light
+// surface has plenty of contrast but the four hues collapse into each other at 6pt — dark green,
+// dark red, dark amber and dark blue all read as "dark blob", and the point of the dot is telling
+// them apart at a glance. So the light band runs as bright as the contrast floor allows: L=0.62
+// is the last step where all four clear 3:1 against the sidebar's surface2 (success is the
+// binding one at 3.10, and drops under 3 by L=0.64), which is WCAG's non-text minimum for a
+// control that carries state.
 //
 // All four move together. A dot matching its siblings in lightness and chroma says only which
 // state the row is in; one that does not says "this row matters more", which is a claim the
@@ -178,14 +183,16 @@ const darkStatusColors = {
 // 90% and not 100%: at the gamut edge the lopsidedness is worst — green reaches C=0.215 while
 // blue manages 0.116 — so the set stops reading as one family and green wins. Red running out
 // of chroma as lightness climbs is what caps the dark band at L=0.72; higher turns the failed
-// dot pink. Running is blue at hue 250, clear of identity-colors' blue at 256.6 so a blue host
-// badge and a working dot on the same row do not read as related.
+// dot pink, and the light band pastels out the same way just above its own cap. Running is blue
+// at hue 250, clear of
+// identity-colors' blue at 256.6 so a blue host badge and a working dot on the same row do not
+// read as related.
 const lightStatusDotColors = {
-  // L=0.46, chroma 90% of gamut max
-  statusDotSuccess: "#186933",
-  statusDotDanger: "#a11c1c",
-  statusDotWarning: "#774e14",
-  statusDotRunning: "#165a96",
+  // L=0.62, chroma 90% of gamut max
+  statusDotSuccess: "#299f51",
+  statusDotDanger: "#f12e2f",
+  statusDotWarning: "#b37824",
+  statusDotRunning: "#268ae0",
 };
 
 const darkStatusDotColors = {
@@ -197,25 +204,27 @@ const darkStatusDotColors = {
 };
 
 // Semantic color tokens - Layer-based system
-const lightSemanticColors = {
+const lightSurfaces = {
   // Surfaces (layers) - shifted one step lighter
   surface0: "#ffffff", // App background
   surface1: "#fafafa", // Subtle hover (was zinc-100, now zinc-50)
   surface2: "#f4f4f5", // Elevated: badges, inputs, sheets (was zinc-200, now zinc-100)
   surface3: "#e4e4e7", // Highest elevation (was zinc-300, now zinc-200)
   surface4: "#d4d4d8", // Extra emphasis (was zinc-400, now zinc-300)
+} as const;
+
+const lightSemanticColors = {
+  ...lightSurfaces,
   surfaceDiffEmpty: "#f6f6f6", // Empty side of split diff rows, between surface1 and surface2 and biased toward surface2
-  surfaceSidebar: "#f4f4f5", // Sidebar background (darker than main)
-  surfaceSidebarHover: "#e9e9ec", // Sidebar hover (darker in light mode)
-  surfaceWorkspace: "#ffffff", // Workspace main background
+  surfaceSidebar: lightSurfaces.surface2, // Sidebar background (darker than main)
+  surfaceSidebarHover: lightSurfaces.surface1,
+  surfaceSidebarSelected: lightSurfaces.surface2,
+  surfaceWorkspace: lightSurfaces.surface0, // Workspace main background
 
   // Text
   foreground: "#1a1a1e",
   foregroundMuted: "#71717a",
   foregroundExtraMuted: "#a1a1aa",
-
-  // Controls
-  scrollbarHandle: "#3f3f46", // zinc-700
 
   // Borders - shifted one step lighter
   border: "#e4e4e7", // (was zinc-200, now zinc-200 - keep for contrast)
@@ -290,10 +299,8 @@ interface DarkThemeConfig {
   surface4: string;
   surfaceDiffEmpty: string;
   surfaceSidebar: string;
-  surfaceSidebarHover: string;
   foregroundMuted: string;
   foregroundExtraMuted: string;
-  scrollbarHandle: string;
   border: string;
   borderAccent: string;
   accent: string;
@@ -330,14 +337,13 @@ function buildDarkSemanticColors(tint: DarkThemeConfig) {
     surface4: tint.surface4,
     surfaceDiffEmpty: tint.surfaceDiffEmpty,
     surfaceSidebar: tint.surfaceSidebar,
-    surfaceSidebarHover: tint.surfaceSidebarHover,
+    surfaceSidebarHover: tint.surface1,
+    surfaceSidebarSelected: tint.surface2,
     surfaceWorkspace: tint.surface1,
 
     foreground: "#fafafa",
     foregroundMuted: tint.foregroundMuted,
     foregroundExtraMuted: tint.foregroundExtraMuted,
-
-    scrollbarHandle: tint.scrollbarHandle,
 
     border: tint.border,
     borderAccent: tint.borderAccent,
@@ -396,10 +402,8 @@ const paseoDarkColors = buildDarkSemanticColors({
   surface4: "#595B5B",
   surfaceDiffEmpty: "#252827",
   surfaceSidebar: "#141716",
-  surfaceSidebarHover: "#1c1f1e",
   foregroundMuted: "#A1A5A4",
   foregroundExtraMuted: "#717574",
-  scrollbarHandle: "#717574",
   border: "#252B2A",
   borderAccent: "#2F3534",
   accent: "#20744A",
@@ -418,10 +422,8 @@ const zincDarkColors = buildDarkSemanticColors({
   surface4: "#52525b",
   surfaceDiffEmpty: "#242427",
   surfaceSidebar: "#131316",
-  surfaceSidebarHover: "#1b1b1e",
   foregroundMuted: "#a1a1aa",
   foregroundExtraMuted: "#71717a",
-  scrollbarHandle: "#71717a",
   border: "#27272a",
   borderAccent: "#303036",
   accent: "#e4e4e7",
@@ -441,10 +443,8 @@ const midnightDarkColors = buildDarkSemanticColors({
   surface4: "#535564",
   surfaceDiffEmpty: "#222430",
   surfaceSidebar: "#121420",
-  surfaceSidebarHover: "#1a1c28",
   foregroundMuted: "#9a9db0",
   foregroundExtraMuted: "#6b6e82",
-  scrollbarHandle: "#6b6e82",
   border: "#242636",
   borderAccent: "#2e3040",
   accent: "#3b6fcf",
@@ -463,10 +463,8 @@ const claudeDarkColors = buildDarkSemanticColors({
   surface4: "#605d5b",
   surfaceDiffEmpty: "#2a2826",
   surfaceSidebar: "#1a1918",
-  surfaceSidebarHover: "#222120",
   foregroundMuted: "#ada9a5",
   foregroundExtraMuted: "#78746f",
-  scrollbarHandle: "#78746f",
   border: "#2c2a27",
   borderAccent: "#36332f",
   accent: "#d97757",
@@ -485,10 +483,8 @@ const ghosttyDarkColors = buildDarkSemanticColors({
   surface4: "#5b6175",
   surfaceDiffEmpty: "#323643",
   surfaceSidebar: "#21252d",
-  surfaceSidebarHover: "#292d36",
   foregroundMuted: "#c8ccd8",
   foregroundExtraMuted: "#a0a4b2",
-  scrollbarHandle: "#a0a4b2",
   border: "#353a47",
   borderAccent: "#3f4454",
   accent: "#89b4fa",
@@ -660,10 +656,8 @@ const pureBlackDarkColors = buildDarkSemanticColors({
   surface4: "#2d2d2d",
   surfaceDiffEmpty: "#0c0c0c",
   surfaceSidebar: "#000000",
-  surfaceSidebarHover: "#0d0d0d",
   foregroundMuted: "#a1a1aa",
   foregroundExtraMuted: "#71717a",
-  scrollbarHandle: "#71717a",
   border: "#1c1c1c",
   borderAccent: "#242424",
   accent: "#20744A",
@@ -708,40 +702,94 @@ export const lightTheme = {
 // Keep compatibility with existing code
 export const theme = darkTheme;
 
-export type Theme =
-  | typeof darkTheme
-  | typeof darkZincTheme
-  | typeof darkMidnightTheme
-  | typeof darkClaudeTheme
-  | typeof darkGhosttyTheme
-  | typeof darkPureBlackTheme
-  | typeof lightTheme;
+export const THEME_OPTIONS = [
+  {
+    name: "light",
+    group: "primary",
+    unistylesName: "light",
+    theme: lightTheme,
+    swatch: "#ffffff",
+  },
+  {
+    name: "dark",
+    group: "primary",
+    unistylesName: "dark",
+    theme: darkTheme,
+    swatch: "#2D8B62",
+  },
+  { name: "auto", group: "primary" },
+  {
+    name: "zinc",
+    group: "variant",
+    unistylesName: "darkZinc",
+    theme: darkZincTheme,
+    swatch: "#808080",
+  },
+  {
+    name: "midnight",
+    group: "variant",
+    unistylesName: "darkMidnight",
+    theme: darkMidnightTheme,
+    swatch: "#4A6BA8",
+  },
+  {
+    name: "claude",
+    group: "variant",
+    unistylesName: "darkClaude",
+    theme: darkClaudeTheme,
+    swatch: "#D97757",
+  },
+  {
+    name: "ghostty",
+    group: "variant",
+    unistylesName: "darkGhostty",
+    theme: darkGhosttyTheme,
+    swatch: "#8caaee",
+  },
+  {
+    name: "pureBlack",
+    group: "variant",
+    unistylesName: "darkPureBlack",
+    theme: darkPureBlackTheme,
+    swatch: "#000000",
+  },
+] as const;
 
-type UnistylesThemeKey =
-  | "light"
-  | "dark"
-  | "darkZinc"
-  | "darkMidnight"
-  | "darkClaude"
-  | "darkGhostty"
-  | "darkPureBlack";
+export type ThemePreference = (typeof THEME_OPTIONS)[number]["name"];
+export type ThemeName = Exclude<ThemePreference, "auto">;
+type ConcreteThemeOption = Exclude<(typeof THEME_OPTIONS)[number], { name: "auto" }>;
+export type Theme = ConcreteThemeOption["theme"];
 
-export const THEME_TO_UNISTYLES: Record<ThemeName, UnistylesThemeKey> = {
-  light: "light",
-  dark: "dark",
-  zinc: "darkZinc",
-  midnight: "darkMidnight",
-  claude: "darkClaude",
-  ghostty: "darkGhostty",
-  pureBlack: "darkPureBlack",
+const CONCRETE_THEME_OPTIONS = THEME_OPTIONS.filter(
+  (option): option is ConcreteThemeOption => option.name !== "auto",
+);
+
+type ThemeToUnistyles = {
+  [Name in ThemeName]: Extract<ConcreteThemeOption, { name: Name }>["unistylesName"];
 };
 
-export const THEME_SWATCHES: Record<ThemeName, string> = {
-  light: "#ffffff",
-  dark: "#2D8B62",
-  zinc: "#808080",
-  midnight: "#4A6BA8",
-  claude: "#D97757",
-  ghostty: "#8caaee",
-  pureBlack: "#000000",
+type ThemeSwatches = {
+  [Name in ThemeName]: Extract<ConcreteThemeOption, { name: Name }>["swatch"];
 };
+
+type RegisteredThemes = {
+  [Option in ConcreteThemeOption as Option["unistylesName"]]: Option["theme"];
+};
+
+export const THEME_TO_UNISTYLES = Object.fromEntries(
+  CONCRETE_THEME_OPTIONS.map((option) => [option.name, option.unistylesName]),
+) as ThemeToUnistyles;
+
+export const THEME_SWATCHES = Object.fromEntries(
+  CONCRETE_THEME_OPTIONS.map((option) => [option.name, option.swatch]),
+) as ThemeSwatches;
+
+export const REGISTERED_THEMES = Object.fromEntries(
+  CONCRETE_THEME_OPTIONS.map((option) => [option.unistylesName, option.theme]),
+) as RegisteredThemes;
+
+export function getNextThemePreference(current: ThemePreference): ThemePreference {
+  const currentIndex = THEME_OPTIONS.findIndex((option) => option.name === current);
+  const nextIndex = (currentIndex + 1) % THEME_OPTIONS.length;
+  return THEME_OPTIONS[nextIndex]?.name ?? THEME_OPTIONS[0].name;
+}
