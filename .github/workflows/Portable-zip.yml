@@ -18,18 +18,34 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+
       - uses: actions/setup-node@v6
         with:
           node-version: 'lts/*'
           cache: npm
-      - run: npm ci
-      - run: npm run build --workspace=@getpaseo/app
-      - run: npm run build --workspace=@getpaseo/desktop
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web app
+        run: npm run build --workspace=@getpaseo/app
+
+      - name: Build desktop
+        run: npm run build --workspace=@getpaseo/desktop
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/upload-artifact@v7
+
+      - name: Verify release output
+        run: |
+          echo "Release directory contents:"
+          ls -la packages/desktop/release || true
+
+      # Upload the unpacked release directory instead of uploading a zip file.
+      # GitHub will compress the folder for download, avoiding an extra nested zip.
+      - name: Upload portable release directory
+        uses: actions/upload-artifact@v7
         with:
           name: Paseo-Windows-Portable-x64
-          path: packages/desktop/release/*x64*.zip
+          path: packages/desktop/release/
           if-no-files-found: error
           retention-days: 3
