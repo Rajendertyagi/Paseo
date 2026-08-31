@@ -24,19 +24,17 @@ jobs:
     name: Build portable Windows x64 ZIP
     runs-on: windows-latest
     timeout-minutes: 40
-    env:
-      NODE_OPTIONS: ${{ env.NODE_OPTIONS }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup Node (pinned latest LTS minor)
-        uses: actions/setup-node@v6
+      - name: Setup Node (pinned LTS minor)
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
+          cache: 'npm'
 
       - name: Cache npm
         uses: actions/cache@v4
@@ -87,7 +85,7 @@ jobs:
           SIZE_BYTES=$(stat -c%s "$ZIP")
           SIZE_MB=$((SIZE_BYTES / 1024 / 1024))
           echo "Artifact size: ${SIZE_MB} MB"
-          if [ "$SIZE_MB" -gt ${{ env.MAX_ARTIFACT_MB }} ]; then
+          if [ "$SIZE_MB" -gt "$MAX_ARTIFACT_MB" ]; then
             echo "Artifact exceeds ${MAX_ARTIFACT_MB} MB (${SIZE_MB} MB). Failing build."
             exit 1
           fi
@@ -101,7 +99,7 @@ jobs:
           ls -lh "${ZIP}.sha256"
 
       - name: Upload single ZIP artifact (no nested zip)
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ env.ARTIFACT_NAME }}
           path: |
@@ -110,9 +108,23 @@ jobs:
           if-no-files-found: error
           retention-days: 3
 
+      - name: Create GitHub Release and attach ZIP (main or tag only)
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+        uses: ncipollo/release-action@v3
+        with:
+          tag: ${{ github.ref_name || github.sha }}
+          name: ${{ github.ref_name || format('build-{0}', github.run_number) }}
+          files: |
+            ${{ steps.find_zip.outputs.zip }}
+            ${{ steps.find_zip.outputs.zip }}.sha256
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Upload build logs on failure
         if: failure()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: build-logs
           path: |
