@@ -26,14 +26,14 @@ jobs:
     timeout-minutes: 40
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Setup Node (pinned LTS minor)
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: '20.x'
           cache: 'npm'
 
       - name: Cache npm
@@ -91,26 +91,36 @@ jobs:
           fi
 
       - name: Compute SHA256 checksum
+        id: checksum
         shell: bash
         run: |
           ZIP="${{ steps.find_zip.outputs.zip }}"
-          # Use sha256sum; on Windows runners bash provides it
           sha256sum "$ZIP" > "${ZIP}.sha256"
           echo "Wrote checksum ${ZIP}.sha256"
           ls -lh "${ZIP}.sha256"
 
+      - name: Prepare release asset names
+        id: set_names
+        shell: bash
+        run: |
+          ZIP="${{ steps.find_zip.outputs.zip }}"
+          ASSET_NAME=$(basename "$ZIP")
+          ASSET_SHA_NAME="${ASSET_NAME}.sha256"
+          echo "asset_name=$ASSET_NAME" >> $GITHUB_OUTPUT
+          echo "asset_sha_name=$ASSET_SHA_NAME" >> $GITHUB_OUTPUT
+          echo "asset_path=$ZIP" >> $GITHUB_OUTPUT
+          echo "asset_sha_path=${ZIP}.sha256" >> $GITHUB_OUTPUT
+
       - name: Upload single ZIP artifact (CI)
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ env.ARTIFACT_NAME }}
           path: |
-            ${{ steps.find_zip.outputs.zip }}
-            ${{ steps.find_zip.outputs.zip }}.sha256
+            ${{ steps.set_names.outputs.asset_path }}
+            ${{ steps.set_names.outputs.asset_sha_path }}
           if-no-files-found: error
           retention-days: 3
 
-      # Create or update a GitHub Release and upload the zip + checksum as release assets.
-      # This runs only on main branch or when pushing tags.
       - name: Create or update GitHub Release
         if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
         id: create_release
@@ -129,8 +139,8 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ steps.find_zip.outputs.zip }}
-          asset_name: ${{ steps.find_zip.outputs.zip | basename }}
+          asset_path: ${{ steps.set_names.outputs.asset_path }}
+          asset_name: ${{ steps.set_names.outputs.asset_name }}
           asset_content_type: application/zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -140,15 +150,15 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ steps.find_zip.outputs.zip }}.sha256
-          asset_name: ${{ steps.find_zip.outputs.zip | basename }}.sha256
+          asset_path: ${{ steps.set_names.outputs.asset_sha_path }}
+          asset_name: ${{ steps.set_names.outputs.asset_sha_name }}
           asset_content_type: text/plain
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload build logs on failure
         if: failure()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: build-logs
           path: |
