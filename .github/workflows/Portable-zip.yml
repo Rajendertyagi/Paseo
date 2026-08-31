@@ -1,5 +1,4 @@
 name: Build Windows Portable ZIP
-
 on:
   workflow_dispatch:
   push:
@@ -9,166 +8,44 @@ concurrency:
   group: portable-zip-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
-  packages: write
-
-env:
-  NODE_OPTIONS: '--max-old-space-size=4096'
-  NODE_VERSION: '20.x'
-  ARTIFACT_NAME: Paseo-Windows-Portable-x64
-  MAX_ARTIFACT_MB: 1024
-
 jobs:
   build-windows:
-    name: Build portable Windows x64 ZIP
     runs-on: windows-latest
-    timeout-minutes: 40
+    timeout-minutes: 30
+    env:
+      NODE_OPTIONS: '--max-old-space-size=4096'
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - name: Setup Node (pinned LTS minor)
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: '20.x'
-          cache: 'npm'
-
-      - name: Cache npm
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: npm-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            npm-${{ runner.os }}-
+          node-version: 'lts/*'
+          cache: npm
 
       - name: Install dependencies
-        shell: bash
         run: npm ci
 
       - name: Build web app
-        shell: bash
         run: npm run build --workspace=@getpaseo/app
 
-      - name: Build desktop (packaging)
-        shell: bash
+      - name: Build desktop
+        run: npm run build --workspace=@getpaseo/desktop
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run build --workspace=@getpaseo/desktop
 
-      - name: Verify release directory (bash)
-        shell: bash
+      - name: Verify release output
         run: |
           echo "Release directory contents:"
           ls -la packages/desktop/release || true
 
-      - name: Find produced x64 zip
-        id: find_zip
-        shell: bash
-        run: |
-          set -e
-          ZIP=$(ls packages/desktop/release/*x64*.zip 2>/dev/null | head -n1 || true)
-          if [ -z "$ZIP" ]; then
-            echo "No x64 zip found in packages/desktop/release" >&2
-            exit 1
-          fi
-          echo "zip=$ZIP" >> $GITHUB_OUTPUT
-          echo "Found artifact: $ZIP"
-          ls -lh "$ZIP"
-
-      - name: Check artifact size and fail if > 1GB
-        shell: bash
-        run: |
-          ZIP="${{ steps.find_zip.outputs.zip }}"
-          SIZE_BYTES=$(stat -c%s "$ZIP")
-          SIZE_MB=$((SIZE_BYTES / 1024 / 1024))
-          echo "Artifact size: ${SIZE_MB} MB"
-          if [ "$SIZE_MB" -gt ${{ env.MAX_ARTIFACT_MB }} ]; then
-            echo "Artifact exceeds ${MAX_ARTIFACT_MB} MB (${SIZE_MB} MB). Failing build."
-            exit 1
-          fi
-
-      - name: Compute SHA256 checksum
-        id: checksum
-        shell: bash
-        run: |
-          ZIP="${{ steps.find_zip.outputs.zip }}"
-          sha256sum "$ZIP" > "${ZIP}.sha256"
-          echo "Wrote checksum ${ZIP}.sha256"
-          ls -lh "${ZIP}.sha256"
-
-      - name: Prepare release asset names
-        id: set_names
-        shell: bash
-        run: |
-          ZIP="${{ steps.find_zip.outputs.zip }}"
-          ASSET_NAME=$(basename "$ZIP")
-          ASSET_SHA_NAME="${ASSET_NAME}.sha256"
-          echo "asset_name=$ASSET_NAME" >> $GITHUB_OUTPUT
-          echo "asset_sha_name=$ASSET_SHA_NAME" >> $GITHUB_OUTPUT
-          echo "asset_path=$ZIP" >> $GITHUB_OUTPUT
-          echo "asset_sha_path=${ZIP}.sha256" >> $GITHUB_OUTPUT
-
-      - name: Upload single ZIP artifact (CI)
-        uses: actions/upload-artifact@v4
+      # Upload the unpacked release directory instead of uploading a zip file.
+      # GitHub will compress the folder for download, avoiding an extra nested zip.
+      - name: Upload portable release directory
+        uses: actions/upload-artifact@v7
         with:
-          name: ${{ env.ARTIFACT_NAME }}
-          path: |
-            ${{ steps.set_names.outputs.asset_path }}
-            ${{ steps.set_names.outputs.asset_sha_path }}
+          name: Paseo-Windows-Portable-x64
+          path: packages/desktop/release/
           if-no-files-found: error
           retention-days: 3
-
-      - name: Create or update GitHub Release
-        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
-        id: create_release
-        uses: actions/create-release@v1
-        with:
-          tag_name: ${{ github.ref_name || github.sha }}
-          release_name: ${{ github.ref_name || format('build-{0}', github.run_number) }}
-          body: "Automated portable Windows x64 build from workflow run ${{ github.run_number }}."
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload ZIP to GitHub Release
-        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ steps.set_names.outputs.asset_path }}
-          asset_name: ${{ steps.set_names.outputs.asset_name }}
-          asset_content_type: application/zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload checksum to GitHub Release
-        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ steps.set_names.outputs.asset_sha_path }}
-          asset_name: ${{ steps.set_names.outputs.asset_sha_name }}
-          asset_content_type: text/plain
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload build logs on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-logs
-          path: |
-            npm-debug.log*
-            packages/desktop/release/*.log
-          if-no-files-found: ignore
-
-      - name: Clean up temporary build files
-        if: always()
-        shell: bash
-        run: |
-          rm -rf packages/desktop/release/* || true
-          echo "Cleaned temporary files"
