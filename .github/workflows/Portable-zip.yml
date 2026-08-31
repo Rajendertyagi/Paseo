@@ -36,16 +36,15 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify release output
+        shell: bash
         run: |
           echo "Release directory contents:"
           ls -la packages/desktop/release || true
 
-      # Upload the unpacked release directory instead of uploading a zip file.
-      # GitHub will compress the folder for download, avoiding an extra nested zip.
-      - name: Upload portable release directory
+      - name: Upload portable release ZIP
         uses: actions/upload-artifact@v7
         with:
           name: Paseo-Windows-Portable-x64
-          path: packages/desktop/release/
+          path: packages/desktop/release/Paseo-Windows-Portable-x64.zip
           if-no-files-found: error
           retention-days: 3
