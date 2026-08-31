@@ -41,10 +41,18 @@ jobs:
           echo "Release directory contents:"
           ls -la packages/desktop/release || true
 
-      - name: Upload portable release ZIP
+      - name: Upload portable x64 ZIP only
         uses: actions/upload-artifact@v7
         with:
           name: Paseo-Windows-Portable-x64
-          path: packages/desktop/release/Paseo-Windows-Portable-x64.zip
+          path: packages/desktop/release/Paseo-Setup-*-x64.zip
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Upload portable arm64 ZIP only
+        uses: actions/upload-artifact@v7
+        with:
+          name: Paseo-Windows-Portable-arm64
+          path: packages/desktop/release/Paseo-Setup-*-arm64.zip
           if-no-files-found: error
           retention-days: 3
