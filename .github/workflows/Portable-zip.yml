@@ -26,12 +26,12 @@ jobs:
     timeout-minutes: 40
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Setup Node (pinned LTS minor)
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -85,7 +85,7 @@ jobs:
           SIZE_BYTES=$(stat -c%s "$ZIP")
           SIZE_MB=$((SIZE_BYTES / 1024 / 1024))
           echo "Artifact size: ${SIZE_MB} MB"
-          if [ "$SIZE_MB" -gt "$MAX_ARTIFACT_MB" ]; then
+          if [ "$SIZE_MB" -gt ${{ env.MAX_ARTIFACT_MB }} ]; then
             echo "Artifact exceeds ${MAX_ARTIFACT_MB} MB (${SIZE_MB} MB). Failing build."
             exit 1
           fi
@@ -94,12 +94,13 @@ jobs:
         shell: bash
         run: |
           ZIP="${{ steps.find_zip.outputs.zip }}"
+          # Use sha256sum; on Windows runners bash provides it
           sha256sum "$ZIP" > "${ZIP}.sha256"
           echo "Wrote checksum ${ZIP}.sha256"
           ls -lh "${ZIP}.sha256"
 
-      - name: Upload single ZIP artifact (no nested zip)
-        uses: actions/upload-artifact@v4
+      - name: Upload single ZIP artifact (CI)
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.ARTIFACT_NAME }}
           path: |
@@ -108,23 +109,46 @@ jobs:
           if-no-files-found: error
           retention-days: 3
 
-      - name: Create GitHub Release and attach ZIP (main or tag only)
+      # Create or update a GitHub Release and upload the zip + checksum as release assets.
+      # This runs only on main branch or when pushing tags.
+      - name: Create or update GitHub Release
         if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
-        uses: ncipollo/release-action@v3
+        id: create_release
+        uses: actions/create-release@v1
         with:
-          tag: ${{ github.ref_name || github.sha }}
-          name: ${{ github.ref_name || format('build-{0}', github.run_number) }}
-          files: |
-            ${{ steps.find_zip.outputs.zip }}
-            ${{ steps.find_zip.outputs.zip }}.sha256
+          tag_name: ${{ github.ref_name || github.sha }}
+          release_name: ${{ github.ref_name || format('build-{0}', github.run_number) }}
+          body: "Automated portable Windows x64 build from workflow run ${{ github.run_number }}."
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Upload ZIP to GitHub Release
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.find_zip.outputs.zip }}
+          asset_name: ${{ steps.find_zip.outputs.zip | basename }}
+          asset_content_type: application/zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload checksum to GitHub Release
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.find_zip.outputs.zip }}.sha256
+          asset_name: ${{ steps.find_zip.outputs.zip | basename }}.sha256
+          asset_content_type: text/plain
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Upload build logs on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: build-logs
           path: |
