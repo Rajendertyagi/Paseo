@@ -1,4 +1,5 @@
 name: Build Windows Portable ZIP
+
 on:
   workflow_dispatch:
   push:
@@ -8,43 +9,120 @@ concurrency:
   group: portable-zip-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  packages: write
+
+env:
+  NODE_OPTIONS: '--max-old-space-size=4096'
+  NODE_VERSION: '20.x'
+  ARTIFACT_NAME: Paseo-Windows-Portable-x64
+  MAX_ARTIFACT_MB: 1024
+
 jobs:
   build-windows:
+    name: Build portable Windows x64 ZIP
     runs-on: windows-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     env:
-      NODE_OPTIONS: '--max-old-space-size=4096'
+      NODE_OPTIONS: ${{ env.NODE_OPTIONS }}
     steps:
-      - uses: actions/checkout@v7
+      - name: Checkout
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@v6
+      - name: Setup Node (pinned latest LTS minor)
+        uses: actions/setup-node@v6
         with:
-          node-version: 'lts/*'
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
+      - name: Cache npm
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            npm-${{ runner.os }}-
+
       - name: Install dependencies
+        shell: bash
         run: npm ci
 
       - name: Build web app
+        shell: bash
         run: npm run build --workspace=@getpaseo/app
 
-      - name: Build desktop
-        run: npm run build --workspace=@getpaseo/desktop
+      - name: Build desktop (packaging)
+        shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run build --workspace=@getpaseo/desktop
 
-      - name: Verify release output
+      - name: Verify release directory (bash)
         shell: bash
         run: |
           echo "Release directory contents:"
           ls -la packages/desktop/release || true
 
-      - name: Upload portable release directory
+      - name: Find produced x64 zip
+        id: find_zip
+        shell: bash
+        run: |
+          set -e
+          ZIP=$(ls packages/desktop/release/*x64*.zip 2>/dev/null | head -n1 || true)
+          if [ -z "$ZIP" ]; then
+            echo "No x64 zip found in packages/desktop/release" >&2
+            exit 1
+          fi
+          echo "zip=$ZIP" >> $GITHUB_OUTPUT
+          echo "Found artifact: $ZIP"
+          ls -lh "$ZIP"
+
+      - name: Check artifact size and fail if > 1GB
+        shell: bash
+        run: |
+          ZIP="${{ steps.find_zip.outputs.zip }}"
+          SIZE_BYTES=$(stat -c%s "$ZIP")
+          SIZE_MB=$((SIZE_BYTES / 1024 / 1024))
+          echo "Artifact size: ${SIZE_MB} MB"
+          if [ "$SIZE_MB" -gt ${{ env.MAX_ARTIFACT_MB }} ]; then
+            echo "Artifact exceeds ${MAX_ARTIFACT_MB} MB (${SIZE_MB} MB). Failing build."
+            exit 1
+          fi
+
+      - name: Compute SHA256 checksum
+        shell: bash
+        run: |
+          ZIP="${{ steps.find_zip.outputs.zip }}"
+          sha256sum "$ZIP" > "${ZIP}.sha256"
+          echo "Wrote checksum ${ZIP}.sha256"
+          ls -lh "${ZIP}.sha256"
+
+      - name: Upload single ZIP artifact (no nested zip)
         uses: actions/upload-artifact@v7
         with:
-          name: Paseo-Windows-Portable-x64
-          path: packages/desktop/release/
+          name: ${{ env.ARTIFACT_NAME }}
+          path: |
+            ${{ steps.find_zip.outputs.zip }}
+            ${{ steps.find_zip.outputs.zip }}.sha256
           if-no-files-found: error
           retention-days: 3
+
+      - name: Upload build logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: build-logs
+          path: |
+            npm-debug.log*
+            packages/desktop/release/*.log
+          if-no-files-found: ignore
+
+      - name: Clean up temporary build files
+        if: always()
+        shell: bash
+        run: |
+          rm -rf packages/desktop/release/* || true
+          echo "Cleaned temporary files"
