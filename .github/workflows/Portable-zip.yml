@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write   # needed only by the release step (manual runs)
+  contents: write
 
 jobs:
   build-windows:
@@ -28,7 +28,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node (pin 22 like upstream CI, npm store cache)
+      - name: Setup Node (latest stable, npm store cache)
         uses: actions/setup-node@v7
         with:
           node-version: 26
@@ -56,13 +56,13 @@ jobs:
           npm run build:server:clean
           npm run build:main --workspace=@getpaseo/desktop
 
-      # x64 + zip ONLY: no arm64, no NSIS installers.
-      # --publish never: the project's publish config points at getpaseo/paseo
-      # (upstream), so we must never let the builder publish anywhere.
+      # --win zip  = build ONLY the zip target (per electron-builder CLI help:
+      # "--win accepts target list").  --x64 = x64 arch only.
+      # No NSIS installer, no arm64.
       - name: Package x64 ZIP only (no arm64, no NSIS)
         working-directory: packages/desktop
         shell: bash
-        run: npx electron-builder --config electron-builder.yml --win --x64 --zip --publish never
+        run: npx electron-builder --config electron-builder.yml --win zip --x64 --publish never
 
       - name: Verify release output
         shell: bash
@@ -70,8 +70,6 @@ jobs:
           ls -la packages/desktop/release || true
           find packages/desktop/release -name "Paseo-Setup-*-x64.zip" | grep -q . || { echo "x64 zip not found"; exit 1; }
 
-      # Manual runs: portable zip as a release asset -> direct download,
-      # NO nested zip. Overwrites the same "latest" release each build.
       - name: Publish portable zip to GitHub Release (manual runs)
         if: github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v3
@@ -82,8 +80,6 @@ jobs:
           generate_release_notes: false
           files: packages/desktop/release/Paseo-Setup-*-x64.zip
 
-      # Push runs: folder upload so the download unzips once -> app dir
-      # (no zip-in-zip).
       - name: Extract portable zip (flatten for artifact)
         if: github.event_name == 'push'
         working-directory: packages/desktop/release
