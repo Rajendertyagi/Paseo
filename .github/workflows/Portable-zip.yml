@@ -9,6 +9,9 @@ concurrency:
   group: portable-zip-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: write   # needed only by the release step (manual runs)
+
 jobs:
   build-windows:
     name: Windows Portable x64 ZIP
@@ -16,9 +19,6 @@ jobs:
     timeout-minutes: 40
     env:
       NODE_OPTIONS: '--max-old-space-size=4096'
-      # Pin electron/electron-builder download caches to workspace paths so
-      # actions/cache can save/restore them deterministically
-      # (documented pattern from electron-builder docs).
       ELECTRON_CACHE: ${{ github.workspace }}\.cache\electron
       ELECTRON_BUILDER_CACHE: ${{ github.workspace }}\.cache\electron-builder
 
@@ -28,15 +28,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      # v7 = current major; pinned to Node 22 to match upstream CI
-      # (their ci.yml runs node 22 everywhere — lts/* had drifted to 24).
-      - name: Setup Node (pin 22, npm store cache)
+      - name: Setup Node (pin 22 like upstream CI, npm store cache)
         uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 26
           cache: npm
 
-      # Electron zip + 7zip/toolsets — seeded on run 1, ~0s restore after.
       - name: Cache Electron + electron-builder toolsets
         uses: actions/cache@v6
         with:
@@ -50,24 +47,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Original order kept (web app first, then server deps + workspaces):
-      # both write into shared node_modules/.cache, so running them in
-      # parallel risks corrupting each other's build caches.
       - name: Build web app
         run: npm run build --workspace=@getpaseo/app
 
-      # build:server:clean (root) covers protocol -> client ->
-      # [highlight, plugin, relay in parallel] -> server, then tsc the
-      # desktop main process — exactly what the old `build` script did,
-      # minus the electron-builder part below.
       - name: Build server workspaces + desktop main
         shell: bash
         run: |
           npm run build:server:clean
           npm run build:main --workspace=@getpaseo/desktop
 
-      # x64 + zip target ONLY: no arm64, no NSIS installers at all.
-      # `--publish never` makes it explicit that no release/upload happens.
+      # x64 + zip ONLY: no arm64, no NSIS installers.
+      # --publish never: the project's publish config points at getpaseo/paseo
+      # (upstream), so we must never let the builder publish anywhere.
       - name: Package x64 ZIP only (no arm64, no NSIS)
         working-directory: packages/desktop
         shell: bash
@@ -76,15 +67,36 @@ jobs:
       - name: Verify release output
         shell: bash
         run: |
-          echo "Release directory contents:"
           ls -la packages/desktop/release || true
-          # Fail early if the zip didn't land
           find packages/desktop/release -name "Paseo-Setup-*-x64.zip" | grep -q . || { echo "x64 zip not found"; exit 1; }
 
-      - name: Upload portable x64 ZIP
+      # Manual runs: portable zip as a release asset -> direct download,
+      # NO nested zip. Overwrites the same "latest" release each build.
+      - name: Publish portable zip to GitHub Release (manual runs)
+        if: github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: portable-win-x64-latest
+          name: Paseo Windows x64 portable
+          draft: false
+          generate_release_notes: false
+          files: packages/desktop/release/Paseo-Setup-*-x64.zip
+
+      # Push runs: folder upload so the download unzips once -> app dir
+      # (no zip-in-zip).
+      - name: Extract portable zip (flatten for artifact)
+        if: github.event_name == 'push'
+        working-directory: packages/desktop/release
+        shell: pwsh
+        run: |
+          $z = (Get-ChildItem "Paseo-Setup-*-x64.zip" | Select-Object -First 1).FullName
+          Expand-Archive -Path $z -DestinationPath "portable-x64" -Force
+
+      - name: Upload portable (folder) artifact (push runs)
+        if: github.event_name == 'push'
         uses: actions/upload-artifact@v7
         with:
           name: Paseo-Windows-Portable-x64
-          path: packages/desktop/release/Paseo-Setup-*-x64.zip
+          path: packages/desktop/release/portable-x64
           if-no-files-found: error
           retention-days: 3
