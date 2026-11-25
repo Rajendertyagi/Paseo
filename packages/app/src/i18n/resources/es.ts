@@ -117,6 +117,8 @@ export const es: TranslationResources = {
       groupByProject: "Agrupar por proyecto",
       groupByStatus: "Agrupar por estado",
       copyBrowserHostName: "Copiar el nombre del host del navegador",
+      profileGroupLabel: "Perfil",
+      profileSearchKeywords: "perfil aplicar perfil perfil de agente preajuste",
       modelGroupLabel: "Modelo",
       modelSearchKeywords: "cambiar modelo modificar modelo establecer modelo seleccionar modelo",
       thinkingGroupLabel: "Razonamiento",
@@ -350,6 +352,7 @@ export const es: TranslationResources = {
       viewDiagram: "Ver diagrama",
     },
     actions: {
+      copyQuote: "Copiar cita",
       copyCode: "Copiar código",
       copyTurn: "Copiar turno",
       copyMessage: "Copiar mensaje",
@@ -925,6 +928,8 @@ export const es: TranslationResources = {
           pushBehind:
             "Push aún no está disponible porque hay cambios más nuevos que implementar primero",
           pushNothing: "Push no está disponible porque no hay nada nuevo que enviar",
+          pushUpstreamGone:
+            "Push no está disponible porque la rama que sigue esta rama ya no existe",
           pullAndPushNoRemote:
             "Tirar y empujar no está disponible aquí porque esta rama aún no está conectada a un control remoto",
           pullAndPushDirty:
@@ -1851,6 +1856,7 @@ export const es: TranslationResources = {
     defaultModel: "Por defecto",
     profiles: "Perfiles",
     providers: "Proveedores",
+    models: "Modelos",
     model: "Modelo",
     editProfiles: "Editar",
     editProfilesLabel: "Editar perfiles de agente",
@@ -2863,6 +2869,23 @@ export const es: TranslationResources = {
         name: {
           label: "Nombre",
         },
+        icon: {
+          label: "Icono",
+          accessibilityLabel: "Icono, {{value}}",
+          auto: "Automático",
+          autoDetected: "Automático ({{icon}})",
+          options: {
+            server: "Servidor",
+            laptop: "Portátil",
+            desktop: "Escritorio",
+            mini: "Mini",
+            workstation: "Estación de trabajo",
+            cloud: "Nube",
+            container: "Contenedor",
+            board: "PC de placa única",
+            terminal: "Terminal",
+          },
+        },
         color: {
           label: "Color",
           accessibilityLabel: "Color, {{value}}",
@@ -2898,6 +2921,14 @@ export const es: TranslationResources = {
         relay: "Relé",
         local: "Local",
         remoteSsh: "SSH remoto",
+      },
+      connectionKinds: {
+        local: "Local",
+        relay: "Relé",
+        tailscale: "Tailscale",
+        ssh: "SSH",
+        direct: "Directo",
+        routed: "Vía",
       },
       connections: {
         title: "Conexiones",
